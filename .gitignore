@@ -1,0 +1,42 @@
+# Python缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境
+venv/
+.venv/
+env/
+.env
+conda-env/
+
+# 环境密钥配置
+*.env
+.env.local
+
+# 模型权重、大文件
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.pth
+models/
+checkpoints/
+
+# 运行缓存
+.cache/
+logs/
+runs/
+outputs/
+
+# IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,14 @@
+llm:
+  model_name: "deepseek-v4-flash-vision-exp"
+  base_url: "https://api.deepseek.com"
+  temperature: 0.3
+
+agents:
+  supervisor:
+    role: "市场调研总监"
+    goal: "统筹整个流程，协调各专家工作"
+    backstory: "你有15年的市场战略咨询经验"
+  searcher:
+    role: "情报收集专家"
+    goal: "从互联网获取最相关、最新的市场情报"
+    backstory: ""
