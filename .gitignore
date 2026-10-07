@@ -40,3 +40,8 @@ outputs/
 .DS_Store
 Thumbs.db
 
+
+# Node 依赖与构建产物
+node_modules/
+dist/
+

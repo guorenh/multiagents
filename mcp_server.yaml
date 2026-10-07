@@ -1,0 +1,8 @@
+servers:
+  search:
+    command: python
+    args:
+    - -m
+    - mcp_tools.servers.search_server
+    transport: stdio
+    description: 市场情报搜索
