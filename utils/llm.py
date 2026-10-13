@@ -1,4 +1,3 @@
-import os
 from langchain_openai import ChatOpenAI
 from utils.config_loader import Config
 from utils import key_store

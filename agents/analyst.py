@@ -18,7 +18,7 @@ def create_analyst_node(manager, tools, llm):
         raw_data = state.get("raw_data", "")
 
         if not raw_data:
-            return {"error": "没有原始数据可供分析", "next_step": "finish"}
+            return {"error": "没有原始数据可供分析"}
         system_prompt = f"""你是{analyst_persona["role"]}。
 {analyst_persona["backstory"]}。
 你的目标{analyst_persona["goal"]}。
@@ -49,8 +49,5 @@ def create_analyst_node(manager, tools, llm):
         except json.JSONDecodeError:
             # 解析失败，存原始文本
             analysis = {"raw": analysis_text}
-        return {
-            "analysis": analysis,
-            "next_step": "report",
-        }
+        return {"analysis": analysis}
     return analyst_node

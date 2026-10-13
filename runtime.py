@@ -28,7 +28,6 @@ def initial_state(topic: str) -> dict:
     return {
         "topic": topic,
         "plan": [],
-        "messages": [],
         "search_history": [],
         "raw_data": "",
         "analysis": {},

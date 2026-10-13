@@ -1,7 +1,7 @@
 import os
 import asyncio
 from contextlib import AsyncExitStack
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp_tools.registry import MCPRegistry

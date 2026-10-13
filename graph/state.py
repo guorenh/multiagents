@@ -1,5 +1,4 @@
-from typing import TypedDict, List, Dict, Any, Optional, Annotated, Literal
-from langgraph.graph.message import add_messages
+from typing import TypedDict, List, Dict, Any, Optional, Literal
 
 
 class ResearchState(TypedDict):
@@ -7,8 +6,6 @@ class ResearchState(TypedDict):
     topic: str
     # supervisor 规划的检索关键词列表
     plan: List[str]
-    # 对话历史
-    messages: Annotated[List[Dict[str, Any]], add_messages]
     # 搜索历史记录
     search_history: List[Dict[str, Any]]
     # 积累的原始文本数据
@@ -23,6 +20,6 @@ class ResearchState(TypedDict):
     review_feedback: str
     # 改写轮次计数，初始为 0
     iteration: int
-    # 当前步骤指示
+    # 下一步走向。只由 supervisor 写入，其余节点不要设置
     next_step: Literal["search", "analyze", "review", "report", "finish"]
     error: Optional[str]

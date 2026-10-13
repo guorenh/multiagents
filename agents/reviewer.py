@@ -73,7 +73,7 @@ def create_reviewer_node(manager, tools, llm):
         topic = state["topic"]
 
         if not draft:
-            return {"error": "没有报告草稿可供审查", "next_step": "finish"}
+            return {"error": "没有报告草稿可供审查"}
 
         system_prompt = REVIEW_PROMPT.format(
             role=persona["role"],

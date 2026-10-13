@@ -13,7 +13,7 @@ def create_reporter_node(manager, tools, llm):
         analysis = state.get("analysis", {})
 
         if not analysis:
-            return {"error": "没有分析结果可供撰写", "next_step": "finish"}
+            return {"error": "没有分析结果可供撰写"}
 
         system_prompt = f"""你是{reporter_persona["role"]}。
 {reporter_persona["backstory"]}。

@@ -18,7 +18,7 @@ def create_searcher_node(manager, tools):
 
         search_tool = next((t for t in tools if t.name == "search_market"), None)
         if search_tool is None:
-            return {"error": "搜索工具未找到", "next_step": "finish"}
+            return {"error": "搜索工具未找到"}
 
         chunks = []
         history = list(state.get("search_history", []))
@@ -42,15 +42,11 @@ def create_searcher_node(manager, tools):
 
         # 所有检索词都失败才判定为失败；部分成功仍然继续
         if not chunks:
-            return {
-                "error": "全部检索均失败：" + "；".join(errors[:3]),
-                "next_step": "finish",
-            }
+            return {"error": "全部检索均失败：" + "；".join(errors[:3])}
 
         return {
             "raw_data": "\n\n".join(chunks),
             "search_history": history,
-            "next_step": "analyze",
         }
 
     return searcher_node
