@@ -42,8 +42,13 @@ async def update_keys(req: KeysUpdate):
 
 @router.get("/status")
 async def get_config_status():
-    """返回配置是否就绪、缺失的 Key，以及当前实际生效的模型"""
+    """返回配置是否就绪、缺失的 Key，以及当前实际生效的模型。
+
+    ready 的判断依据是"图能不能跑"，而不只是"Key 填了没有"——
+    填了 Key 但构建失败时，前端也应该继续停在设置页。
+    """
     missing = research_service.get_missing_keys()
+    runtime = research_service.get_runtime()
 
     model = None
     try:
@@ -53,8 +58,12 @@ async def get_config_status():
         # Key 还没配全时拿不到实例，不影响就绪状态判断
         pass
 
+    graph_ready = bool(runtime and runtime.ready)
+
     return {
-        "ready": len(missing) == 0,
+        "ready": len(missing) == 0 and graph_ready,
         "missing_keys": missing,
         "model": model,
+        "graph_ready": graph_ready,
+        "error": runtime.last_error if runtime else None,
     }

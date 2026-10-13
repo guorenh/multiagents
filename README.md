@@ -8,7 +8,8 @@
 - [工作原理](#工作原理)
 - [核心特性](#核心特性)
 - [环境要求](#环境要求)
-- [快速开始](#快速开始)
+- [快速开始（Docker，推荐）](#快速开始docker推荐)
+- [快速开始（本地运行）](#快速开始本地运行)
 - [配置说明](#配置说明)
 - [API 接口](#api-接口)
 - [目录结构](#目录结构)
@@ -65,13 +66,100 @@
 
 ## 环境要求
 
+**方式一：Docker（推荐）**
+
+| 依赖 | 版本（已验证） |
+|---|---|
+| Docker Engine | 24+ |
+| Docker Compose | v2+ |
+
+宿主机不需要装 Python 或 Node —— 前端构建也在镜像里完成。
+
+**方式二：本地运行**
+
 | 依赖 | 版本（已验证） |
 |---|---|
 | Python | 3.12 |
 | Node.js | 24.x |
 | 操作系统 | Windows / macOS / Linux |
 
-## 快速开始
+## 快速开始（Docker，推荐）
+
+### 1. 准备 API Key
+
+需要两个 Key（都可以先留空，见第 3 步）：
+
+| Key | 用途 | 获取地址 |
+|---|---|---|
+| `OPENAI_API_KEY` | 调用大模型（兼容 OpenAI 格式，DeepSeek / 通义 / Kimi 均可） | https://platform.deepseek.com |
+| `TAVILY_API_KEY` | 网络搜索 | https://tavily.com |
+
+### 2. 一键启动
+
+```bash
+docker compose up -d --build
+```
+
+首次构建需要几分钟（装 Node 依赖 + Python 依赖）。完成后打开：
+
+**http://127.0.0.1:8000**
+
+### 3. 填入 Key
+
+如果第 1 步没有配置 Key，**服务依然会正常启动**，前端会自动跳转到设置页
+（http://127.0.0.1:8000/settings），在页面上填完保存即可生效，无需重启。
+
+也可以走环境变量，复制一份 `.env` 再填：
+
+```bash
+cp .env.example .env
+# 编辑 .env 填入 OPENAI_API_KEY / TAVILY_API_KEY
+docker compose up -d
+```
+
+### 常用命令
+
+```bash
+docker compose logs -f      # 看日志
+docker compose restart      # 重启
+docker compose down         # 停止并删除容器（./data 里的配置会保留）
+docker compose up -d --build  # 改完代码后重新构建
+```
+
+### 数据与配置怎么持久化
+
+| 宿主机路径 | 容器内 | 说明 |
+|---|---|---|
+| `./data` | `/app/data` | 凭证与运行数据，删容器不丢 |
+| `./config.yaml` | `/app/config.yaml` | 只读挂载，改完 `docker compose restart` 即生效 |
+
+> **端口暴露**：容器内监听 `0.0.0.0`，但 compose 把它发布到 `127.0.0.1:8000`，
+> 所以**只有本机能访问**。这是因为接口没有鉴权（`/config/keys` 谁都能改），
+> 不要随意改成 `0.0.0.0:8000`，除非你已经加了认证。
+
+### 构建慢 / 构建报错怎么办
+
+**依赖下载慢**：镜像默认已经走了国内源（清华 PyPI + npmmirror）。
+直连官方源实测只有约 46 kB/s，走镜像能到 300~500 kB/s。
+海外环境想换回官方源，在 `.env` 里覆盖即可：
+
+```dotenv
+PIP_INDEX_URL=https://pypi.org/simple
+NPM_REGISTRY=https://registry.npmjs.org
+```
+
+**报 `rpc error: code = Unavailable ... EOF`**：这是 Docker Desktop 的 CLI 与守护进程
+断连，**不是构建失败**。从日志可以确认各步骤是否已经 `DONE`，直接重试即可：
+
+```bash
+docker compose build
+```
+
+已构建成功的层会被缓存，重试不会从头再来。
+
+## 快速开始（本地运行）
+
+> 需要宿主机装好 Python 3.12 和 Node 24。
 
 ### 1. 安装后端依赖
 
@@ -79,23 +167,36 @@
 pip install -r requirements.txt
 ```
 
-### 2. 准备 API Key
+### 2. 构建前端
 
-需要两个 Key：
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+```
 
-| Key | 用途 | 获取地址 |
-|---|---|---|
-| `OPENAI_API_KEY` | 调用大模型（兼容 OpenAI 格式，DeepSeek / 通义 / Kimi 均可） | https://platform.deepseek.com |
-| `TAVILY_API_KEY` | 网络搜索 | https://tavily.com |
+### 3. 启动
 
-有三种配置方式，任选其一：
+```bash
+python api/main.py
+```
 
-**方式 A：前端设置页（推荐）**
-启动服务后打开 http://127.0.0.1:8000/settings 直接填写，保存即生效。
-若 Key 未配置，前端会自动跳转到该页面。
+打开 http://127.0.0.1:8000 即可使用。`/docs` 是自动生成的 OpenAPI 文档。
 
-**方式 B：`.env` 文件**
-在项目根目录创建 `.env`，首次启动会自动迁移到 `data/credentials.json`：
+> 等价写法：`python -m api.main`。两种都可以，`python api/main.py` 内部做了
+> `sys.path` 处理，所以从项目根目录直接跑没问题。
+
+### 4. 填入 Key
+
+和 Docker 方式一样：打开 http://127.0.0.1:8000/settings 填写保存即可。
+**缺 Key 不会导致服务启动失败**，只会在设置页提示。
+
+也可以在这三种方式里选一种：
+
+**方式 A：前端设置页（推荐）** —— 保存即生效，无需重启。
+
+**方式 B：`.env` 文件** —— 在项目根目录创建 `.env`，启动时会自动同步到 `data/credentials.json`：
 
 ```dotenv
 OPENAI_API_KEY=sk-xxxxxxxx
@@ -104,24 +205,6 @@ TAVILY_API_KEY=tvly-xxxxxxxx
 ```
 
 **方式 C：直接编辑 `data/credentials.json`**
-
-### 3. 构建前端
-
-```bash
-cd frontend
-npm install
-npm run build
-```
-
-### 4. 启动
-
-```bash
-python api/main.py
-```
-
-打开 http://127.0.0.1:8000 即可使用。`/docs` 是自动生成的 OpenAPI 文档。
-
-> 服务默认只监听 `127.0.0.1`。**接口没有任何鉴权**，如需从其他机器访问，务必先自行加上认证再改绑地址。
 
 ### 前端开发模式
 

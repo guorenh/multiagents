@@ -16,6 +16,11 @@ class MCPClientManager:
         self._queue: asyncio.Queue = asyncio.Queue()
         self._worker_task = None 
 
+    @property
+    def running_servers(self) -> List[str]:
+        """当前已建立会话的服务名列表"""
+        return list(self._sessions.keys())
+
     def start_worker(self):
         """在 lifespan 里调用，启动管理任务"""
         if self._worker_task is None:

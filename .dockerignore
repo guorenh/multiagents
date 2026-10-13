@@ -1,0 +1,25 @@
+# 依赖与构建产物：容器内会重新安装/构建
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+**/*.pyo
+
+# 本地凭证：绝不能进镜像
+data
+.env
+*.env
+credentials.json
+
+# 版本控制与编辑器
+.git
+.gitignore
+.vscode
+.idea
+
+# 本地虚拟环境
+venv
+.venv
+
+# 文档与临时文件
+*.log

@@ -1,0 +1,33 @@
+services:
+  multiagents:
+    build:
+      context: .
+      # 国内默认走镜像源；海外环境在 .env 里覆盖这两个变量即可
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    image: multiagents:latest
+    container_name: multiagents
+
+    ports:
+      # 只发布到宿主机回环地址。
+      # 容器内虽然绑 0.0.0.0，但外部网络依然访问不到，
+      # 因为接口没有鉴权（/config/keys 谁都能改）。
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      # 都可以留空：服务照样能起来，打开 http://127.0.0.1:8000/settings 填即可，
+      # 填完保存在下面挂载的 ./data 里，容器重建也不会丢。
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.deepseek.com}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      # 留空则使用 config.yaml 里的 model_name
+      LLM_MODEL: ${LLM_MODEL:-}
+
+    volumes:
+      # 凭证与运行数据持久化
+      - ./data:/app/data
+      # 想改阈值/人设/默认模型，直接改宿主机上的 config.yaml 再重启即可
+      - ./config.yaml:/app/config.yaml:ro
+
+    restart: unless-stopped

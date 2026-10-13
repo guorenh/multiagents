@@ -49,6 +49,26 @@ class ResearchRuntime:
         self.manager: MCPClientManager | None = None
         self.tools: list = []
         self.graph = None
+        # 图构建失败的原因（通常是缺少 API Key），供 /config/status 展示
+        self.last_error: str | None = None
+
+    @property
+    def ready(self) -> bool:
+        return self.graph is not None
+
+    async def _build_graph(self) -> None:
+        """构建 LLM 与图。
+
+        缺 API Key 时**不能**让异常冒泡：服务必须能起来，
+        否则用户永远打不开设置页去填 Key（首次运行流程会直接死锁）。
+        """
+        try:
+            self.graph = build_graph(self.manager, self.tools, get_llm(rebuild=True))
+            self.last_error = None
+        except Exception as e:
+            self.graph = None
+            self.last_error = str(e)
+            logger.warning("图构建失败，服务仍会启动以便在设置页配置：%s", e)
 
     async def setup(self) -> "ResearchRuntime":
         self.registry = MCPRegistry()
@@ -64,20 +84,29 @@ class ResearchRuntime:
 
         await self.manager.start_server(SEARCH_SERVER["name"])
         self.tools = await convert_all_tools(self.manager)
-        self.graph = build_graph(self.manager, self.tools, get_llm())
+        await self._build_graph()
         return self
 
     async def rebuild(self) -> None:
-        """Key 变更后重建 MCP 服务 + LLM + 图"""
+        """配置变更后重建 LLM 与图。
+
+        MCP 服务只在确实在跑的时候才重启——首次启动时如果因为缺 Key
+        还没连上，硬重启会把本已就绪的工具链一起搞坏。
+        """
         if self.manager is None:
             raise RuntimeError("运行时尚未初始化")
-        await self.manager.restart_all()
-        self.tools = await convert_all_tools(self.manager)
-        self.graph = build_graph(self.manager, self.tools, get_llm(rebuild=True))
+
+        if self.manager.running_servers:
+            await self.manager.restart_all()
+            self.tools = await convert_all_tools(self.manager)
+
+        await self._build_graph()
 
     async def run(self, topic: str) -> dict:
         if self.graph is None:
-            raise RuntimeError("调研应用未初始化")
+            raise RuntimeError(
+                self.last_error or "调研应用未就绪，请先在设置页配置 API Key"
+            )
         return await self.graph.ainvoke(initial_state(topic))
 
     async def close(self) -> None:
