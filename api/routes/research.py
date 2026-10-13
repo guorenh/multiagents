@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from api.services import research_service
 
-router = APIRouter(prefix="/research", tags=["research"])
+router = APIRouter(prefix="/api/research", tags=["research"])
 
 class ResearchRequest(BaseModel):
     topic: str

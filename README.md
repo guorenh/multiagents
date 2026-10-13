@@ -273,18 +273,21 @@ deepseek-v4-flash-vision-exp
 
 ## API 接口
 
+> 业务接口统一挂在 **`/api`** 前缀下。前端 `baseURL` 也是 `/api`，
+> dev（vite 代理）与生产（后端托管 dist）走完全相同的路径，不做任何 rewrite。
+
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/health` | 健康检查 |
-| POST | `/research` | 创建调研任务，body `{"topic": "..."}`，返回 `{"task_id", "status"}` |
-| GET | `/research/{task_id}` | 查询任务状态：`running` / `completed` / `failed` |
-| GET | `/research/{task_id}/report` | 获取报告（未完成时返回 400） |
-| GET | `/mcp/servers` | 列出已注册的 MCP 服务及其状态 |
-| GET | `/config/keys` | 列出可配置项（**只返回是否已配置，不返回密钥明文**） |
-| POST | `/config/keys` | 批量保存配置，body `{"keys": {"LLM_MODEL": "..."}}`，保存后统一重建一次 |
-| GET | `/config/status` | 返回 `{"ready", "missing_keys", "model"}` |
+| GET | `/health` | 健康检查（不带 `/api`，供容器 HEALTHCHECK 使用） |
+| POST | `/api/research` | 创建调研任务，body `{"topic": "..."}`，返回 `{"task_id", "status"}` |
+| GET | `/api/research/{task_id}` | 查询任务状态：`running` / `completed` / `failed` |
+| GET | `/api/research/{task_id}/report` | 获取报告（未完成时返回 400） |
+| GET | `/api/mcp/servers` | 列出已注册的 MCP 服务及其状态 |
+| GET | `/api/config/keys` | 列出可配置项（**只返回是否已配置，不返回密钥明文**） |
+| POST | `/api/config/keys` | 批量保存配置，body `{"keys": {"LLM_MODEL": "..."}}`，保存后统一重建一次 |
+| GET | `/api/config/status` | 返回 `{"ready", "missing_keys", "model", "graph_ready", "error"}` |
 
-调研任务异步执行：`POST /research` 立即返回 `task_id`，前端每 3 秒轮询状态（最多 100 次，5 分钟超时）。
+调研任务异步执行：`POST /api/research` 立即返回 `task_id`，前端每 3 秒轮询状态（最多 100 次，5 分钟超时）。
 
 ## 目录结构
 

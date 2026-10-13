@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from api.services import research_service
 from utils import key_store
 
-router = APIRouter(prefix="/config", tags=["config"])
+router = APIRouter(prefix="/api/config", tags=["config"])
 
 class KeysUpdate(BaseModel):
     # 字段名 -> 值；值传空字符串表示清空（非必填项回落到 config.yaml 默认值）

@@ -21,8 +21,16 @@ from utils import key_store  # noqa: E402
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")
 
-# 这些前缀属于后端 API，不能被前端 SPA 的兜底路由吞掉
-API_PREFIXES = ("/research", "/mcp", "/config", "/health", "/docs", "/redoc", "/openapi.json")
+# 这些前缀属于后端 API，不能被前端 SPA 的兜底路由吞掉。
+# 必须包含 /api：否则请求一个不存在的 /api/xxx 会拿到 index.html（200 + HTML），
+# 前端把 HTML 当数据解析，报出 "xxx.map is not a function" 这种莫名其妙的错。
+API_PREFIXES = (
+    "/api",
+    "/health",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+)
 
 
 @asynccontextmanager

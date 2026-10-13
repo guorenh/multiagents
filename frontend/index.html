@@ -4,7 +4,30 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>市场调研助手</title>
+    <!--
+      兜底诊断：万一渲染阶段抛错，页面会变成一片空白且毫无线索。
+      这里在模块脚本之前注册监听，把首个未捕获错误直接显示到页面上。
+    -->
+    <script>
+      (function () {
+        function show(label, detail) {
+          var root = document.getElementById('root')
+          if (root && !root.innerHTML.trim()) {
+            root.innerHTML =
+              '<pre style="padding:20px;color:#cf1322;white-space:pre-wrap;font:13px/1.6 monospace">' +
+              '页面渲染失败：' + label + '\n\n' + detail + '</pre>'
+          }
+        }
+        window.addEventListener('error', function (e) {
+          show(e.message || 'Error', (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || ''))
+        })
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason
+          show('UnhandledRejection', (r && (r.stack || r.message)) || String(r))
+        })
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
