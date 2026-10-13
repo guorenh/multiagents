@@ -5,16 +5,15 @@ from mcp.server.mcpserver import MCPServer
 
 load_dotenv()
 
-api_key = os.getenv("TAVILY_API_KEY")
-if not api_key:
-    raise ValueError("TAVILY_API_KEY 未配置，请在 .env 中设置")
-tavily_client = TavilyClient(api_key=api_key)
-
 mcp = MCPServer("market-research-server")
 
 @mcp.tool()
 def search_market(query: str, max_results: int = 5) -> str:
     """搜索市场情报，返回标题、链接和摘要"""
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        return "ERROR:TAVILY_API_KEY_MISSING: 请先在设置中配置 Tavily API Key"
+    tavily_client = TavilyClient(api_key=api_key)
     max_results = min(max_results, 10)
     
     try:

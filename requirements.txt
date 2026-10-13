@@ -1,0 +1,32 @@
+# 多智能体市场调研系统 —— 后端依赖
+# 版本为本机实测可跑通的组合，改动前请先跑一遍 python test_mcp.py 与端到端调研。
+#
+# 安装：pip install -r requirements.txt
+# 注意：mcp 2.x 的 API 为 mcp.server.mcpserver.MCPServer；
+#       1.x 时代是 mcp.server.fastmcp.FastMCP，降级会直接 ImportError。
+
+# --- MCP 协议层 ---
+mcp==2.3.0
+
+# --- 编排与模型 ---
+langgraph==1.2.14
+langchain==1.4.4
+langchain-core==1.6.9
+langchain-openai==1.7.0
+openai==3.28.0
+
+# --- Web 服务 ---
+fastapi==0.143.0
+uvicorn==0.54.0
+starlette==1.7.0
+
+# --- 数据校验 / 配置 ---
+pydantic==2.14.0
+python-dotenv==1.2.4
+PyYAML==6.0.3
+
+# --- 搜索工具 ---
+tavily-python==0.8.5
+
+# --- HTTP 客户端 ---
+httpx==0.28.1

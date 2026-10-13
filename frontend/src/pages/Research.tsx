@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Layout, Card, Input, Spin, Alert, Typography } from 'antd'
+import {  Card, Input, Spin, Alert, Typography } from 'antd'
 import ReactMarkdown from 'react-markdown'
 import { createResearch, getResearchStatus, getResearchReport } from '../api/research'
 
@@ -11,41 +11,64 @@ export default function Research() {
     const [error, setError] = useState<string | null>(null)
 
     const intervalRef = useRef<number | null>(null)
+    const pollCountRef = useRef(0)
+
+    // 轮询上限：3 秒一次，最多 5 分钟，避免任务卡死时无限转圈
+    const POLL_INTERVAL_MS = 3000
+    const MAX_POLLS = 100
+
+    const stopPolling = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current)
+            intervalRef.current = null
+        }
+    }
 
     const handleSubmit = async (value: string) => {
         if (!value.trim()) return
 
+        stopPolling()
+        pollCountRef.current = 0
         setLoading(true)
         setReport('')
         setError(null)
+        setStatus('running')
         setTopic(value)
 
         try {
             const { task_id } = await createResearch(value)
-            setStatus('running')
 
             // 启动轮询
             intervalRef.current = window.setInterval(async () => {
+                pollCountRef.current += 1
+                if (pollCountRef.current > MAX_POLLS) {
+                    stopPolling()
+                    setStatus('failed')
+                    setError('调研超时（超过 5 分钟未完成），请稍后重试')
+                    setLoading(false)
+                    return
+                }
+
                 try {
                     const res = await getResearchStatus(task_id)
                     setStatus(res.status)
 
                     if (res.status === 'completed') {
-                        if (intervalRef.current) clearInterval(intervalRef.current)
+                        stopPolling()
                         const r = await getResearchReport(task_id)
                         setReport(r.report)
                         setLoading(false)
                     } else if (res.status === 'failed') {
-                        if (intervalRef.current) clearInterval(intervalRef.current)
+                        stopPolling()
                         setError(res.error || '调研失败')
                         setLoading(false)
                     }
                 } catch (e: any) {
-                    if (intervalRef.current) clearInterval(intervalRef.current)
+                    stopPolling()
                     setError(e.message || '查询失败')
                     setLoading(false)
                 }
-            }, 3000)
+            }, POLL_INTERVAL_MS)
         } catch (e: any) {
             setError(e.message || '提交失败')
             setLoading(false)
@@ -54,12 +77,12 @@ export default function Research() {
 
     useEffect(() => {
         return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current)
+            stopPolling()
         }
     }, [])
 
     return (
-        <Layout style={{ minHeight: '100vh', padding: '40px 20px' }}>
+        <div style={{ minHeight: '100vh', padding: '40px 20px' }}>
             <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
 
                 <Card title="市场调研助手" style={{ marginBottom: 20 }}>
@@ -98,6 +121,6 @@ export default function Research() {
                 )}
 
             </div>
-        </Layout>
+        </div>
     )
 }

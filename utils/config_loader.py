@@ -28,6 +28,18 @@ class Config:
         return self._load()["agents"][name]
     
     @property
-    def max_iterations(self):
-        return self._load().get("max_iterations", 5)
+    def quality(self) -> Dict[str, Any]:
+        return self._load().get("quality", {})
+
+    @property
+    def min_score(self) -> int:
+        return self.quality.get("min_score", 75)
+
+    @property
+    def max_iterations(self) -> int:
+        return self.quality.get("max_iterations", 2)
+
+    @property
+    def max_search_queries(self) -> int:
+        return self.quality.get("max_search_queries", 3)
     

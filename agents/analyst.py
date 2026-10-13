@@ -2,16 +2,14 @@ import json
 from graph.state import ResearchState
 from utils.config_loader import Config
 
+
 def create_analyst_node(manager, tools, llm):
     """
     创建分析器节点(闭包注入依赖)
     """
-    print("    [analyst] 1. 准备创建 Config")
     config = Config()
-    print("    [analyst] 2. Config 创建完成")
-    
     analyst_persona = config.agent("analyst")
-    print("    [analyst] 3. 人设读取完成")
+
     async def analyst_node(state: ResearchState) -> dict:
         """
         分析器节点

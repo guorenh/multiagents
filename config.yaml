@@ -1,7 +1,16 @@
 llm:
-  model_name: "deepseek-v4-flash-vision-exp"
+  model_name: "deepseek-v4-flash"
   base_url: "https://api.deepseek.com"
   temperature: 0.3
+
+# 质量控制：审校回环的阈值与上限
+quality:
+  # 报告评分低于该值时退回 reporter 改写
+  min_score: 75
+  # 最多改写次数（防止无限循环）
+  max_iterations: 2
+  # supervisor 规划的最多检索关键词数量
+  max_search_queries: 3
 
 agents:
   supervisor:

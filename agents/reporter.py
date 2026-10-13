@@ -1,4 +1,5 @@
 import json
+
 from graph.state import ResearchState
 from utils.config_loader import Config
 
@@ -6,13 +7,14 @@ from utils.config_loader import Config
 def create_reporter_node(manager, tools, llm):
     config = Config()
     reporter_persona = config.agent("reporter")
-    
+
     async def reporter_node(state: ResearchState) -> dict:
         topic = state["topic"]
         analysis = state.get("analysis", {})
-        
+
         if not analysis:
             return {"error": "没有分析结果可供撰写", "next_step": "finish"}
+
         system_prompt = f"""你是{reporter_persona["role"]}。
 {reporter_persona["backstory"]}。
 你的目标{reporter_persona["goal"]}。
@@ -44,15 +46,40 @@ def create_reporter_node(manager, tools, llm):
 ...
 """
 
-        user_prompt = f"调研主题: {topic}\n\n分析结果: {json.dumps(analysis, ensure_ascii=False, indent=2)}。\n\n请撰写完整的调研报告。"
+        user_prompt = (
+            f"调研主题: {topic}\n\n"
+            f"分析结果: {json.dumps(analysis, ensure_ascii=False, indent=2)}。\n\n"
+            f"请撰写完整的调研报告。"
+        )
+
+        # 如果是审校后的改写，带上上一版和审查意见
+        previous = state.get("draft", "")
+        feedback = state.get("review_feedback", "")
+        is_rewrite = bool(previous) and state.get("review_score") is not None
+
+        if is_rewrite:
+            user_prompt += (
+                f"\n\n这是第 {state.get('iteration', 0) + 1} 次改写。"
+                f"\n上一版报告：\n{previous[:4000]}\n"
+                f"\n审查意见（必须逐条修正）：\n{feedback or '（无具体意见，请整体提升质量）'}\n"
+                f"\n请输出改进后的完整报告，不要只输出修改片段。"
+            )
+            system_prompt += "\n注意：必须直接回应审查意见，不要重复上一版存在的问题。"
+
         response = await llm.ainvoke([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ])
         report = response.content
-        return {
+
+        updates = {
             "draft": report,
-            "next_step": "finish",
+            # 重置评分，让 supervisor 重新走一轮审查
+            "review_score": None,
         }
+        if is_rewrite:
+            updates["iteration"] = state.get("iteration", 0) + 1
+
+        return updates
 
     return reporter_node

@@ -13,9 +13,19 @@ JSON_TYPE_MAP = {
 }
 
 def _extract_text(result: Any) -> str:
-    if result.content:
-        return result.content[0].text
-    return str(result)
+    """从 MCP 调用结果里提取文本。
+
+    兼容 content 为空、多段 content、以及 content 里混有非文本块的情况。
+    """
+    parts = []
+    for item in getattr(result, "content", None) or []:
+        text = getattr(item, "text", None)
+        if text:
+            parts.append(text)
+    if parts:
+        return "\n".join(parts)
+    # 没有文本内容时退化为整个结果的字符串表示，避免 IndexError
+    return str(getattr(result, "content", result))
 
 def mcp_tool_to_langchain(tool_info: dict, manager: MCPClientManager) -> StructuredTool:
     """把 MCP 工具信息转换为 LangChain 的 StructuredTool"""
@@ -36,6 +46,9 @@ def mcp_tool_to_langchain(tool_info: dict, manager: MCPClientManager) -> Structu
 
     async def _run(**kwargs):
         result = await manager.call_tool(server, name, kwargs)
+        if getattr(result, "isError", False):
+            # MCP 工具自身报错时明确抛出，避免把错误文本当正常数据喂给下游
+            raise RuntimeError(f"MCP 工具 {server}.{name} 返回错误: {_extract_text(result)}")
         return _extract_text(result)
 
     return StructuredTool.from_function(
